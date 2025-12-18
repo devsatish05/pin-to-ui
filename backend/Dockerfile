@@ -1,26 +1,44 @@
-FROM eclipse-temurin:17-jdk-alpine as build
-WORKDIR /workspace/app
+# Build stage
+FROM node:20-alpine AS builder
 
-# Copy Maven files
-COPY pom.xml .
-COPY src src
+WORKDIR /app
 
-# Build the application
-RUN apk add --no-cache maven && \
-    mvn clean package -DskipTests && \
-    mkdir -p target/dependency && \
-    (cd target/dependency; jar -xf ../*.jar)
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
 
-FROM eclipse-temurin:17-jre-alpine
-VOLUME /tmp
+# Install dependencies
+RUN npm ci
 
-# Copy the dependency application file from build stage
-ARG DEPENDENCY=/workspace/app/target/dependency
-COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
-COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
+# Copy source code
+COPY . .
 
-# Run the application
-ENTRYPOINT ["java","-cp","app:app/lib/*","com.example.uicomment.UiCommentApplication"]
+# Generate Prisma client
+RUN npm run prisma:generate
 
+# Build TypeScript
+RUN npm run build
+
+# Production stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+
+# Generate Prisma client in production
+RUN npm run prisma:generate
+
+# Expose port
 EXPOSE 8080
+
+# Start application
+CMD ["npm", "start"]

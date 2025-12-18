@@ -5,8 +5,9 @@ A full-stack web application for adding visual comments and feedback annotations
 
 ## Tech Stack
 - **Frontend**: TypeScript, Vite, SCSS
-- **Backend**: Java 17, Spring Boot, Maven
-- **Database**: H2 (in-memory, default) / PostgreSQL 16 (production)
+- **Backend**: Node.js, Express, TypeScript
+- **ORM**: Prisma
+- **Database**: SQLite (development) / PostgreSQL 16 (production)
 - **Containerization**: Docker, Docker Compose
 
 ## Project Structure
@@ -41,39 +42,28 @@ pin-to-ui/
 │   └── nginx.conf
 │
 ├── backend/
-│   ├── src/main/java/com/example/uicomment/
-│   │   ├── controller/
-│   │   │   └── CommentController.java
-│   │   ├── service/
-│   │   │   └── CommentService.java
-│   │   ├── repository/
-│   │   │   └── CommentRepository.java
-│   │   ├── model/
-│   │   │   └── Comment.java
-│   │   ├── dto/
-│   │   │   ├── CreateCommentRequest.java
-│   │   │   ├── CommentResponse.java
-│   │   │   └── UpdateCommentRequest.java
-│   │   ├── config/
-│   │   │   └── CorsConfig.java
-│   │   ├── exception/
-│   │   │   ├── ResourceNotFoundException.java
-│   │   │   ├── GlobalExceptionHandler.java
-│   │   │   └── ErrorResponse.java
-│   │   └── UiCommentApplication.java
+│   ├── src/
+│   │   ├── controllers/
+│   │   │   └── comment.controller.ts
+│   │   ├── services/
+│   │   │   └── comment.service.ts
+│   │   ├── routes/
+│   │   │   └── comment.routes.ts
+│   │   ├── middleware/
+│   │   │   ├── validation.middleware.ts
+│   │   │   └── error.middleware.ts
+│   │   ├── types/
+│   │   │   └── index.ts
+│   │   └── index.ts
 │   │
-│   ├── src/main/resources/
-│   │   ├── application.properties
-│   │   └── application-dev.properties
+│   ├── prisma/
+│   │   └── schema.prisma
 │   │
-│   ├── src/test/resources/
-│   │   └── application-test.properties
-│   │
-│   ├── pom.xml
+│   ├── package.json
+│   ├── tsconfig.json
 │   ├── Dockerfile
 │   └── .env.example
 │
-├── docker-compose.yml
 ├── .env.docker.example
 ├── .gitignore
 ├── README.md
@@ -81,27 +71,29 @@ pin-to-ui/
 └── architect.md
 ```
 
-## Database Schema
+## Database Schema (Prisma)
 
-### Comments Table
-```sql
-CREATE TABLE comments (
-    id BIGSERIAL PRIMARY KEY,
-    page_url VARCHAR(2048) NOT NULL,
-    content TEXT NOT NULL,
-    position_x INTEGER NOT NULL,
-    position_y INTEGER NOT NULL,
-    screenshot_url VARCHAR(2048),
-    status VARCHAR(50),
-    priority VARCHAR(50),
-    author_name VARCHAR(255),
-    author_email VARCHAR(255),
-    category VARCHAR(100),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    resolution VARCHAR(1000),
-    assigned_to VARCHAR(255)
-);
+### Comments Model
+```prisma
+model Comment {
+  id            Int      @id @default(autoincrement())
+  pageUrl       String   @map("page_url")
+  content       String
+  positionX     Int      @map("position_x")
+  positionY     Int      @map("position_y")
+  screenshotUrl String?  @map("screenshot_url")
+  status        String   @default("open")
+  priority      String   @default("medium")
+  authorName    String?  @map("author_name")
+  authorEmail   String?  @map("author_email")
+  category      String   @default("general")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  resolution    String?
+  assignedTo    String?  @map("assigned_to")
+
+  @@map("comments")
+}
 ```
 
 ## API Endpoints
@@ -122,22 +114,31 @@ CREATE TABLE comments (
 3. **Comment Lifecycle**: Open → In Progress → Resolved → Closed
 4. **Priority Levels**: Low, Medium, High, Critical
 5. **Categories**: Bug, Feature, Improvement, Question, General
-6. **Responsive Design**: SCSS-based styling system
+6. **Responsive Design**: SCSS-based styling system with modern CSS features
 7. **Type Safety**: Full TypeScript support
 8. **REST API**: Complete CRUD operations
 9. **Docker Support**: Containerized deployment
 10. **CORS Enabled**: Cross-origin resource sharing
+11. **Standalone Mode**: Frontend works independently with localStorage fallback
+12. **Smart Modal Positioning**: Automatic viewport boundary detection prevents overflow
+13. **Visual Mode Indicator**: Toggle button shows backend connection status
 
 ## Development Workflow
 
-1. **Local Development** (with H2):
-   - Backend: `mvn spring-boot:run` (port 8080)
+1. **Standalone Frontend** (no backend required):
    - Frontend: `npm run dev` (port 5173)
-   - Database: H2 in-memory (no setup needed)
-   - H2 Console: http://localhost:8080/h2-console
+   - Storage: Browser localStorage
+   - Mode Indicator: Orange toggle button with 📦 badge
 
-1. **Production** (with PostgreSQL):
-   - Backend: `mvn spring-boot:run -Dspring-boot.run.profiles=prod`
+2. **Local Development** (with SQLite):
+   - Backend: `npm run dev` (port 8080)
+   - Frontend: `npm run dev` (port 5173)
+   - Database: SQLite (automatic)
+   - Prisma Studio: `npm run prisma:studio`
+   - Mode Indicator: Blue toggle button (connected)
+
+3. **Production** (with PostgreSQL):
+   - Backend: `npm start` with DATABASE_URL env variable
    - Database: PostgreSQL on port 5432
 
 2. **Docker Deployment**:
@@ -146,33 +147,58 @@ CREATE TABLE comments (
    ```
 
 3. **Production Build**:
-   - Backend: `mvn clean package`
-   - Frontend: `npm run build`
+   - Backend: `npm run build` (compiles TypeScript)
+   - Frontend: `npm run build` (Vite build)
+   - Database: `npm run prisma:generate && npm run prisma:migrate`
 
 ## Configuration
 
 ### Database
-- **Default (Demo/Dev)**: H2 in-memory database
+- **Development**: SQLite (file-based)
   - No setup required
-  - Console: http://localhost:8080/h2-console
-  - JDBC URL: `jdbc:h2:mem:ui_comment_db`
+  - File: `./prisma/dev.db`
+  - Prisma Studio: `npm run prisma:studio`
 - **Production**: PostgreSQL 16
   - Port: 5432
   - Database: ui_comment_db
   - User: postgres (configurable)
-  - Profile: `prod`
+  - Connection via DATABASE_URL env variable
 
 ### Backend
-- **Framework**: Spring Boot 3.2.1
-- **Java**: 17
+- **Runtime**: Node.js 18+
+- **Framework**: Express 4.x
+- **Language**: TypeScript
+- **ORM**: Prisma
 - **Port**: 8080
-- **Build Tool**: Maven
+- **Build Tool**: tsx (TypeScript execution)
 
 ### Frontend
 - **Build Tool**: Vite 5.x
 - **Language**: TypeScript 5.3
-- **Port**: 5173 (dev), 80 (production)
-- **Styling**: SCSS
+- **Port**: 5173/5174 (dev), 80 (production)
+- **Styling**: Modern SCSS with @use modules
+- **Storage**: Dual-mode (Backend API / localStorage)
+- **Modal System**: Smart viewport-aware positioning
+
+## UI/UX Improvements
+
+### Smart Modal Positioning
+- Automatic viewport boundary detection
+- Dynamic positioning (left/right/top/bottom)
+- Prevents modal overflow at screen edges
+- Maintains visibility for all pin locations
+
+### Mode Indicators
+- **Connected Mode**: Blue toggle button
+- **Standalone Mode**: Orange button with 📦 badge
+- Hover tooltips show current mode
+- Automatic backend detection on load
+
+### Modern SCSS Architecture
+- `@use` modules instead of deprecated `@import`
+- `color-mix()` instead of deprecated `darken()`
+- Modular variable system
+- No preprocessor warnings
 
 ## Security Considerations
 
@@ -181,6 +207,15 @@ CREATE TABLE comments (
 - PostgreSQL prepared statements (SQL injection protection)
 - Environment variable configuration
 - Global exception handling
+- localStorage data scoped per page URL
+
+## Completed Enhancements
+
+- [x] Standalone mode with localStorage
+- [x] Smart modal positioning
+- [x] Modern SCSS architecture
+- [x] Visual mode indicators
+- [x] Dual database support (H2/PostgreSQL)
 
 ## Future Enhancements
 
@@ -192,3 +227,6 @@ CREATE TABLE comments (
 - [ ] Export comments (CSV/PDF)
 - [ ] Admin dashboard
 - [ ] API documentation (Swagger/OpenAPI)
+- [ ] Mobile-responsive touch interactions
+- [ ] Keyboard shortcuts
+- [ ] Dark mode theme
