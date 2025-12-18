@@ -10,7 +10,7 @@ A full-stack application for adding comments and feedback annotations directly o
 - **Status Tracking**: Track comment lifecycle (Open, In Progress, Resolved, Closed)
 - **Standalone Library**: Can be integrated into any web application
 - **RESTful API**: Complete backend API for comment management
-- **MySQL Database**: Persistent storage for all comments
+- **H2 Database**: In-memory database for easy demo (PostgreSQL ready for production)
 - **CORS Support**: Configured for cross-origin requests
 
 ## 📋 Prerequisites
@@ -18,7 +18,7 @@ A full-stack application for adding comments and feedback annotations directly o
 ### Backend
 - Java 17 or higher
 - Maven 3.6+
-- MySQL 8.0+
+- (Optional) PostgreSQL 12+ for production use
 
 ### Frontend
 - Node.js 18+ and npm/yarn
@@ -33,25 +33,14 @@ git clone https://github.com/devsatish05/pin-to-ui.git
 cd pin-to-ui
 ```
 
-### 2. Database Setup
+### 2. Backend Setup
 
-Create a MySQL database:
+**No database setup required!** The application uses H2 in-memory database by default.
 
-```sql
-CREATE DATABASE ui_comment_db;
-```
-
-### 3. Backend Setup
+For PostgreSQL production setup, see [Production Deployment](#-production-deployment) section.
 
 ```bash
 cd backend
-
-# Copy environment file
-cp .env.example .env
-
-# Edit .env with your database credentials
-# DB_USERNAME=your_username
-# DB_PASSWORD=your_password
 
 # Build the project
 mvn clean install
@@ -61,6 +50,11 @@ mvn spring-boot:run
 ```
 
 The backend will start on `http://localhost:8080`
+
+**🎉 H2 Console Available:** Access the database console at `http://localhost:8080/h2-console`
+- JDBC URL: `jdbc:h2:mem:ui_comment_db`
+- Username: `sa`
+- Password: (leave empty)
 
 ### 4. Frontend Setup
 
@@ -211,21 +205,31 @@ See `INSTRUCTIONS.md` for Docker deployment instructions.
 
 ## 🔧 Configuration
 
-### Backend Configuration
+### Database Configuration
 
-Edit `backend/src/main/resources/application.properties`:
-
+**Default (H2 - No setup needed):**
 ```properties
-# Database
-spring.datasource.url=jdbc:mysql://localhost:3306/ui_comment_db
-spring.datasource.username=root
+# H2 In-Memory Database (default)
+spring.datasource.url=jdbc:h2:mem:ui_comment_db
+spring.h2.console.enabled=true
+# Access H2 Console: http://localhost:8080/h2-console
+```
+
+**Production (PostgreSQL):**
+
+Create `backend/src/main/resources/application-prod.properties` (already included):
+```properties
+# PostgreSQL Database
+spring.datasource.url=jdbc:postgresql://localhost:5432/ui_comment_db
+spring.datasource.username=postgres
 spring.datasource.password=password
+```
 
-# CORS
-cors.allowed.origins=http://localhost:5173,http://localhost:3000
-
-# Server
-server.port=8080
+Run with production profile:
+```bash
+mvn spring-boot:run -Dspring-boot.run.profiles=prod
+# or
+java -jar target/ui-comment-backend-1.0.0.jar --spring.profiles.active=prod
 ```
 
 ### Frontend Configuration
