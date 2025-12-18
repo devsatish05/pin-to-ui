@@ -4,7 +4,7 @@ import './styles.scss';
 
 // Get configuration from environment variables
 const config: OverlayConfig = {
-    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/comments',
     enableDebug: import.meta.env.VITE_ENABLE_DEBUG === 'true',
     theme: 'light',
     position: 'bottom-right',

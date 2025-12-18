@@ -1,6 +1,6 @@
 # UI Comment System
 
-A full-stack application for adding comments and feedback annotations directly on web pages. Built with TypeScript/Vite frontend and Java Spring Boot backend.
+A full-stack application for adding comments and feedback annotations directly on web pages. Built with TypeScript/Vite frontend and Node.js/Express backend.
 
 ## 🚀 Features
 
@@ -11,18 +11,18 @@ A full-stack application for adding comments and feedback annotations directly o
 - **Standalone Library**: Can be integrated into any web application
 - **Independent Frontend**: Works without backend using localStorage
 - **RESTful API**: Complete backend API for comment management
-- **H2 Database**: In-memory database for easy demo (PostgreSQL ready for production)
+- **PostgreSQL Database**: Production-ready database with Prisma ORM
 - **CORS Support**: Configured for cross-origin requests
+- **TypeScript**: Full type safety across frontend and backend
 
 ## 📋 Prerequisites
 
 ### Backend
-- Java 17 or higher
-- Maven 3.6+
-- (Optional) PostgreSQL 12+ for production use
+- Node.js 20+
+- PostgreSQL 15+
 
 ### Frontend
-- Node.js 18+ and npm/yarn
+- Node.js 20+ and npm
 - Modern web browser
 
 ## 🛠️ Installation & Setup
@@ -36,26 +36,28 @@ cd pin-to-ui
 
 ### 2. Backend Setup
 
-**No database setup required!** The application uses H2 in-memory database by default.
-
-For PostgreSQL production setup, see [Production Deployment](#-production-deployment) section.
-
 ```bash
+# Create PostgreSQL database
+createdb uicomment
+
 cd backend
 
-# Build the project
-mvn clean install
+# Install dependencies
+npm install
 
-# Run the application
-mvn spring-boot:run
+# Setup environment variables
+cp .env.example .env
+
+# Run database migrations
+npm run prisma:migrate
+
+# Start development server
+npm run dev
 ```
 
 The backend will start on `http://localhost:8080`
 
-**🎉 H2 Console Available:** Access the database console at `http://localhost:8080/h2-console`
-- JDBC URL: `jdbc:h2:mem:ui_comment_db`
-- Username: `sa`
-- Password: (leave empty)
+**🎉 Prisma Studio Available:** Open visual database editor with `npm run prisma:studio`
 
 ### 3. Frontend Setup
 

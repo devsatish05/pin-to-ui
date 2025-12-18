@@ -134,6 +134,9 @@ export class UICommentOverlay {
 
     this.modalElement = document.createElement('div');
     this.modalElement.className = 'ui-comment-modal';
+    
+    // Temporarily append to get dimensions
+    this.modalElement.style.visibility = 'hidden';
     this.modalElement.style.left = `${position.x}px`;
     this.modalElement.style.top = `${position.y}px`;
 
@@ -180,6 +183,10 @@ export class UICommentOverlay {
 
     document.body.appendChild(this.modalElement);
 
+    // Adjust position to prevent overflow
+    this.adjustModalPosition(position);
+    this.modalElement.style.visibility = 'visible';
+
     const closeBtn = this.modalElement.querySelector('.close-btn');
     const cancelBtn = this.modalElement.querySelector('.btn-cancel');
     const submitBtn = this.modalElement.querySelector('.btn-submit');
@@ -187,6 +194,53 @@ export class UICommentOverlay {
     closeBtn?.addEventListener('click', () => this.closeModal());
     cancelBtn?.addEventListener('click', () => this.closeModal());
     submitBtn?.addEventListener('click', () => this.submitComment(position));
+  }
+
+  private adjustModalPosition(clickPosition: Position): void {
+    if (!this.modalElement) return;
+
+    const modal = this.modalElement;
+    const modalRect = modal.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const scrollX = window.pageXOffset;
+    const scrollY = window.pageYOffset;
+    const padding = 16; // Safe padding from edges
+
+    let x = clickPosition.x;
+    let y = clickPosition.y;
+
+    // Default: modal above the click point
+    let transformX = '-50%';
+    let transformY = 'calc(-100% - 16px)';
+
+    // Check horizontal overflow
+    const modalHalfWidth = modalRect.width / 2;
+    if (x - modalHalfWidth < scrollX + padding) {
+      // Too close to left edge
+      x = scrollX + padding + modalHalfWidth;
+    } else if (x + modalHalfWidth > scrollX + viewportWidth - padding) {
+      // Too close to right edge
+      x = scrollX + viewportWidth - padding - modalHalfWidth;
+    }
+
+    // Check vertical overflow
+    const modalHeight = modalRect.height;
+    if (y - modalHeight - 16 < scrollY + padding) {
+      // Not enough space above, position below
+      transformY = '16px';
+      
+      // Check if there's space below
+      if (y + modalHeight + 16 > scrollY + viewportHeight - padding) {
+        // No space above or below, center vertically
+        y = scrollY + viewportHeight / 2;
+        transformY = '-50%';
+      }
+    }
+
+    modal.style.left = `${x}px`;
+    modal.style.top = `${y}px`;
+    modal.style.transform = `translate(${transformX}, ${transformY})`;
   }
 
   private closeModal(): void {
