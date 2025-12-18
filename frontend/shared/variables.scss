@@ -1,0 +1,41 @@
+// SCSS Variables
+$primary-color: #3b82f6;
+$secondary-color: #8b5cf6;
+$success-color: #10b981;
+$warning-color: #f59e0b;
+$danger-color: #ef4444;
+$info-color: #06b6d4;
+
+$text-primary: #1f2937;
+$text-secondary: #6b7280;
+$text-light: #9ca3af;
+
+$bg-light: #ffffff;
+$bg-dark: #1f2937;
+$bg-overlay: rgba(0, 0, 0, 0.5);
+
+$border-color: #e5e7eb;
+$border-radius: 8px;
+$border-radius-sm: 4px;
+
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+$font-size-sm: 12px;
+$font-size-base: 14px;
+$font-size-lg: 16px;
+$font-size-xl: 20px;
+
+$transition-fast: 0.15s ease;
+$transition-normal: 0.3s ease;
+
+$z-index-overlay: 9998;
+$z-index-modal: 9999;
+$z-index-tooltip: 10000;
