@@ -9,6 +9,7 @@ export class UICommentOverlay {
   private pins: CommentPin[] = [];
   private overlayElement: HTMLElement | null = null;
   private modalElement: HTMLElement | null = null;
+  private standaloneMode: boolean = false;
 
   constructor(config: OverlayConfig) {
     this.config = {
@@ -24,7 +25,20 @@ export class UICommentOverlay {
   private init(): void {
     this.log('Initializing UI Comment Overlay');
     this.createToggleButton();
-    this.loadExistingComments();
+    this.checkBackendConnection();
+  }
+
+  private async checkBackendConnection(): Promise<void> {
+    try {
+      await this.loadExistingComments();
+      this.standaloneMode = false;
+      this.log('Backend connected successfully');
+    } catch (error) {
+      this.standaloneMode = true;
+      this.log('Running in standalone mode (backend not available)');
+      console.warn('UI Comment Overlay: Backend not available. Running in demo mode with local storage.');
+    }
+    this.updateToggleButtonMode();
   }
 
   private log(message: string, ...args: any[]): void {
@@ -41,6 +55,19 @@ export class UICommentOverlay {
     button.title = 'Toggle UI Comments';
     button.addEventListener('click', () => this.toggle());
     document.body.appendChild(button);
+  }
+
+  private updateToggleButtonMode(): void {
+    const button = document.getElementById('ui-comment-toggle');
+    if (button) {
+      if (this.standaloneMode) {
+        button.classList.add('standalone-mode');
+        button.title = 'Toggle UI Comments (Standalone Mode - Using localStorage)';
+      } else {
+        button.classList.remove('standalone-mode');
+        button.title = 'Toggle UI Comments (Connected to Backend)';
+      }
+    }
   }
 
   public toggle(): void {
@@ -190,18 +217,58 @@ export class UICommentOverlay {
       authorEmail: authorEmail || undefined,
       category: category as any,
       priority: priority as any,
-      status: 'OPEN',
+      status: 'OPEN' as any,
     };
 
     try {
-      const savedComment = await this.apiClient.createComment(comment);
-      this.log('Comment created:', savedComment);
+      let savedComment: Comment;
+      
+      if (this.standaloneMode) {
+        // Save to localStorage in standalone mode
+        savedComment = {
+          ...comment,
+          id: Date.now(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        this.saveToLocalStorage(savedComment);
+        this.log('Comment saved locally (standalone mode):', savedComment);
+      } else {
+        // Save to backend
+        savedComment = await this.apiClient.createComment(comment);
+        this.log('Comment created on server:', savedComment);
+      }
+      
       this.addPin(position, savedComment);
       this.closeModal();
     } catch (error) {
       console.error('Failed to create comment:', error);
-      alert('Failed to create comment. Please try again.');
+      // Fallback to localStorage if backend fails
+      const savedComment: Comment = {
+        ...comment,
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      this.saveToLocalStorage(savedComment);
+      this.addPin(position, savedComment);
+      this.closeModal();
+      console.warn('Backend unavailable. Comment saved locally.');
     }
+  }
+
+  private saveToLocalStorage(comment: Comment): void {
+    const key = `ui-comments-${window.location.href}`;
+    const existing = localStorage.getItem(key);
+    const comments = existing ? JSON.parse(existing) : [];
+    comments.push(comment);
+    localStorage.setItem(key, JSON.stringify(comments));
+  }
+
+  private loadFromLocalStorage(): Comment[] {
+    const key = `ui-comments-${window.location.href}`;
+    const existing = localStorage.getItem(key);
+    return existing ? JSON.parse(existing) : [];
   }
 
   private addPin(position: Position, comment: Comment): void {
@@ -246,8 +313,24 @@ export class UICommentOverlay {
 
   private async loadExistingComments(): Promise<void> {
     try {
-      const comments = await this.apiClient.getCommentsByPageUrl(window.location.href);
-      this.log('Loaded existing comments:', comments);
+      let comments: Comment[];
+      
+      if (this.standaloneMode) {
+        // Load from localStorage in standalone mode
+        comments = this.loadFromLocalStorage();
+        this.log('Loaded comments from localStorage:', comments);
+      } else {
+        try {
+          // Try to load from backend
+          comments = await this.apiClient.getCommentsByPageUrl(window.location.href);
+          this.log('Loaded existing comments from server:', comments);
+        } catch (error) {
+          // Fallback to localStorage if backend fails
+          this.standaloneMode = true;
+          comments = this.loadFromLocalStorage();
+          this.log('Backend unavailable, loaded from localStorage:', comments);
+        }
+      }
 
       comments.forEach((comment) => {
         if (comment.positionX && comment.positionY) {

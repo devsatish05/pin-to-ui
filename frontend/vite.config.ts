@@ -2,10 +2,10 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
 export default defineConfig({
-  root: '.',
-  publicDir: 'public',
+  root: './ui',
+  publicDir: '../public',
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
     lib: {
       entry: resolve(__dirname, 'ui/main.ts'),
       name: 'UICommentOverlay',

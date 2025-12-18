@@ -9,6 +9,7 @@ A full-stack application for adding comments and feedback annotations directly o
 - **Priority Levels**: Set priority from Low to Critical
 - **Status Tracking**: Track comment lifecycle (Open, In Progress, Resolved, Closed)
 - **Standalone Library**: Can be integrated into any web application
+- **Independent Frontend**: Works without backend using localStorage
 - **RESTful API**: Complete backend API for comment management
 - **H2 Database**: In-memory database for easy demo (PostgreSQL ready for production)
 - **CORS Support**: Configured for cross-origin requests
@@ -56,7 +57,7 @@ The backend will start on `http://localhost:8080`
 - Username: `sa`
 - Password: (leave empty)
 
-### 4. Frontend Setup
+### 3. Frontend Setup
 
 ```bash
 cd frontend
@@ -64,16 +65,13 @@ cd frontend
 # Install dependencies
 npm install
 
-# Copy environment file
-cp .env.example .env
-
-# Edit .env if needed (default API URL is http://localhost:8080/api)
-
 # Start development server
 npm run dev
 ```
 
 The frontend will start on `http://localhost:5173`
+
+**🎉 Frontend works independently!** Comments are saved to localStorage if backend is not running. See [STANDALONE.md](./STANDALONE.md) for details.
 
 ## 📖 Usage
 
