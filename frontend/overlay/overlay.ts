@@ -358,7 +358,197 @@ export class UICommentOverlay {
   }
 
   private showPinDetails(pin: CommentPin): void {
-    alert(`Comment: ${pin.comment.content}\nStatus: ${pin.comment.status}`);
+    this.closeModal();
+
+    this.modalElement = document.createElement('div');
+    this.modalElement.className = 'ui-comment-modal ui-comment-details';
+    this.modalElement.style.left = `${pin.position.x}px`;
+    this.modalElement.style.top = `${pin.position.y}px`;
+
+    const statusOptions = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'];
+    const priorityOptions = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
+    this.modalElement.innerHTML = `
+      <div class="modal-header">
+        <h3>Comment Details</h3>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="comment-detail">
+          <label>Comment:</label>
+          <p>${pin.comment.content}</p>
+        </div>
+        <div class="comment-detail">
+          <label>Author:</label>
+          <p>${pin.comment.authorName || 'Anonymous'}</p>
+        </div>
+        ${pin.comment.authorEmail ? `
+        <div class="comment-detail">
+          <label>Email:</label>
+          <p>${pin.comment.authorEmail}</p>
+        </div>` : ''}
+        <div class="comment-detail">
+          <label>Category:</label>
+          <p>${pin.comment.category || 'GENERAL'}</p>
+        </div>
+        <div class="comment-detail">
+          <label>Priority:</label>
+          <select id="update-priority" class="priority-select">
+            ${priorityOptions.map(p => `<option value="${p}" ${pin.comment.priority === p ? 'selected' : ''}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="comment-detail">
+          <label>Status:</label>
+          <select id="update-status" class="status-select">
+            ${statusOptions.map(s => `<option value="${s}" ${pin.comment.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </div>
+        <div class="comment-detail">
+          <label>Created:</label>
+          <p>${pin.comment.createdAt ? new Date(pin.comment.createdAt).toLocaleString() : 'N/A'}</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-delete" style="background-color: #dc3545;">Delete Pin</button>
+        <button class="btn-update" style="background-color: #28a745;">Update</button>
+        <button class="btn-cancel">Close</button>
+      </div>
+    `;
+
+    document.body.appendChild(this.modalElement);
+    this.adjustModalPosition(pin.position);
+    this.modalElement.style.visibility = 'visible';
+
+    const closeBtn = this.modalElement.querySelector('.close-btn');
+    const cancelBtn = this.modalElement.querySelector('.btn-cancel');
+    const updateBtn = this.modalElement.querySelector('.btn-update');
+    const deleteBtn = this.modalElement.querySelector('.btn-delete');
+
+    closeBtn?.addEventListener('click', () => this.closeModal());
+    cancelBtn?.addEventListener('click', () => this.closeModal());
+    updateBtn?.addEventListener('click', () => this.updatePin(pin));
+    deleteBtn?.addEventListener('click', () => this.deletePin(pin));
+  }
+
+  private async updatePin(pin: CommentPin): Promise<void> {
+    if (!pin.comment.id) {
+      alert('Cannot update comment without ID');
+      return;
+    }
+
+    const statusSelect = document.getElementById('update-status') as HTMLSelectElement;
+    const prioritySelect = document.getElementById('update-priority') as HTMLSelectElement;
+
+    const updates = {
+      status: statusSelect?.value,
+      priority: prioritySelect?.value,
+    };
+
+    try {
+      if (this.standaloneMode) {
+        // Update in localStorage
+        this.updateInLocalStorage(pin.comment.id, updates);
+        pin.comment.status = updates.status as any;
+        pin.comment.priority = updates.priority as any;
+        this.log('Comment updated locally (standalone mode)');
+      } else {
+        // Update on backend
+        const updatedComment = await this.apiClient.updateComment(pin.comment.id, updates);
+        pin.comment = updatedComment;
+        this.log('Comment updated on server:', updatedComment);
+      }
+
+      this.closeModal();
+      
+      // Update pin appearance if status is RESOLVED or CLOSED
+      if (updates.status === 'RESOLVED' || updates.status === 'CLOSED') {
+        this.updatePinAppearance(pin);
+      }
+      
+      alert('Comment updated successfully!');
+    } catch (error) {
+      console.error('Failed to update comment:', error);
+      alert('Failed to update comment. Please try again.');
+    }
+  }
+
+  private async deletePin(pin: CommentPin): Promise<void> {
+    if (!confirm('Are you sure you want to delete this comment?')) {
+      return;
+    }
+
+    if (!pin.comment.id) {
+      alert('Cannot delete comment without ID');
+      return;
+    }
+
+    try {
+      if (this.standaloneMode) {
+        // Delete from localStorage
+        this.deleteFromLocalStorage(pin.comment.id);
+        this.log('Comment deleted locally (standalone mode)');
+      } else {
+        // Delete from backend
+        await this.apiClient.deleteComment(pin.comment.id);
+        this.log('Comment deleted from server');
+      }
+
+      // Remove from pins array
+      const index = this.pins.findIndex(p => p.id === pin.id);
+      if (index > -1) {
+        this.pins.splice(index, 1);
+      }
+
+      // Remove pin element from DOM
+      document.querySelectorAll('.ui-comment-pin').forEach((element) => {
+        const pinEl = element as HTMLElement;
+        if (pinEl.style.left === `${pin.position.x}px` && pinEl.style.top === `${pin.position.y}px`) {
+          pinEl.remove();
+        }
+      });
+
+      this.closeModal();
+      alert('Comment deleted successfully!');
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      alert('Failed to delete comment. Please try again.');
+    }
+  }
+
+  private updatePinAppearance(pin: CommentPin): void {
+    document.querySelectorAll('.ui-comment-pin').forEach((element) => {
+      const pinEl = element as HTMLElement;
+      if (pinEl.style.left === `${pin.position.x}px` && pinEl.style.top === `${pin.position.y}px`) {
+        if (pin.comment.status === 'RESOLVED' || pin.comment.status === 'CLOSED') {
+          pinEl.style.opacity = '0.5';
+          pinEl.style.filter = 'grayscale(100%)';
+          pinEl.title = `${pin.comment.content} (${pin.comment.status})`;
+        }
+      }
+    });
+  }
+
+  private updateInLocalStorage(id: number, updates: any): void {
+    const key = `ui-comments-${window.location.href}`;
+    const existing = localStorage.getItem(key);
+    if (existing) {
+      const comments = JSON.parse(existing);
+      const index = comments.findIndex((c: Comment) => c.id === id);
+      if (index > -1) {
+        comments[index] = { ...comments[index], ...updates, updatedAt: new Date().toISOString() };
+        localStorage.setItem(key, JSON.stringify(comments));
+      }
+    }
+  }
+
+  private deleteFromLocalStorage(id: number): void {
+    const key = `ui-comments-${window.location.href}`;
+    const existing = localStorage.getItem(key);
+    if (existing) {
+      const comments = JSON.parse(existing);
+      const filtered = comments.filter((c: Comment) => c.id !== id);
+      localStorage.setItem(key, JSON.stringify(filtered));
+    }
   }
 
   private clearPins(): void {

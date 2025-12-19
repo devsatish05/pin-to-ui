@@ -14,39 +14,39 @@ class ApiClient {
   }
 
   async createComment(comment: Comment): Promise<Comment> {
-    const response = await this.client.post<Comment>('/comments', comment);
+    const response = await this.client.post<Comment>('/api/comments', comment);
     return response.data;
   }
 
   async getAllComments(): Promise<Comment[]> {
-    const response = await this.client.get<Comment[]>('/comments');
+    const response = await this.client.get<Comment[]>('/api/comments');
     return response.data;
   }
 
   async getCommentById(id: number): Promise<Comment> {
-    const response = await this.client.get<Comment>(`/comments/${id}`);
+    const response = await this.client.get<Comment>(`/api/comments/${id}`);
     return response.data;
   }
 
   async getCommentsByPageUrl(url: string): Promise<Comment[]> {
-    const response = await this.client.get<Comment[]>('/comments/page', {
+    const response = await this.client.get<Comment[]>('/api/comments/page', {
       params: { url },
     });
     return response.data;
   }
 
   async getCommentsByStatus(status: string): Promise<Comment[]> {
-    const response = await this.client.get<Comment[]>(`/comments/status/${status}`);
+    const response = await this.client.get<Comment[]>(`/api/comments/status/${status}`);
     return response.data;
   }
 
   async updateComment(id: number, updates: Partial<Comment>): Promise<Comment> {
-    const response = await this.client.put<Comment>(`/comments/${id}`, updates);
+    const response = await this.client.put<Comment>(`/api/comments/${id}`, updates);
     return response.data;
   }
 
   async deleteComment(id: number): Promise<void> {
-    await this.client.delete(`/comments/${id}`);
+    await this.client.delete(`/api/comments/${id}`);
   }
 }
 

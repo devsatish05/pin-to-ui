@@ -40,18 +40,40 @@ public class CommentService {
         Optional<Comment> optional = commentRepository.findById(id);
         if (!optional.isPresent()) return null;
         Comment comment = optional.get();
-        // Update fields
-        comment.setContent(updates.getContent());
-        comment.setPositionX(updates.getPositionX());
-        comment.setPositionY(updates.getPositionY());
-        comment.setScreenshotUrl(updates.getScreenshotUrl());
-        comment.setStatus(updates.getStatus());
-        comment.setPriority(updates.getPriority());
-        comment.setAuthorName(updates.getAuthorName());
-        comment.setAuthorEmail(updates.getAuthorEmail());
-        comment.setCategory(updates.getCategory());
-        comment.setResolution(updates.getResolution());
-        comment.setAssignedTo(updates.getAssignedTo());
+        // Update only non-null fields
+        if (updates.getContent() != null) {
+            comment.setContent(updates.getContent());
+        }
+        if (updates.getPositionX() != null) {
+            comment.setPositionX(updates.getPositionX());
+        }
+        if (updates.getPositionY() != null) {
+            comment.setPositionY(updates.getPositionY());
+        }
+        if (updates.getScreenshotUrl() != null) {
+            comment.setScreenshotUrl(updates.getScreenshotUrl());
+        }
+        if (updates.getStatus() != null) {
+            comment.setStatus(updates.getStatus());
+        }
+        if (updates.getPriority() != null) {
+            comment.setPriority(updates.getPriority());
+        }
+        if (updates.getAuthorName() != null) {
+            comment.setAuthorName(updates.getAuthorName());
+        }
+        if (updates.getAuthorEmail() != null) {
+            comment.setAuthorEmail(updates.getAuthorEmail());
+        }
+        if (updates.getCategory() != null) {
+            comment.setCategory(updates.getCategory());
+        }
+        if (updates.getResolution() != null) {
+            comment.setResolution(updates.getResolution());
+        }
+        if (updates.getAssignedTo() != null) {
+            comment.setAssignedTo(updates.getAssignedTo());
+        }
         comment.setUpdatedAt(new Date());
         return commentRepository.save(comment);
     }
