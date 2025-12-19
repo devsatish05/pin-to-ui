@@ -8,16 +8,6 @@ import java.util.List;
 
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
-
     List<Comment> findByPageUrl(String pageUrl);
-
     List<Comment> findByStatus(String status);
-
-    List<Comment> findByPriority(String priority);
-
-    List<Comment> findByCategory(String category);
-
-    List<Comment> findByAssignedTo(String assignedTo);
-
-    List<Comment> findByPageUrlAndStatus(String pageUrl, String status);
 }

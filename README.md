@@ -17,7 +17,7 @@ A full-stack application for adding comments and feedback annotations directly o
 ## 📋 Prerequisites
 
 ### Backend
-- Java 17 or higher
+- Java 8 or higher
 - Maven 3.6+
 - (Optional) PostgreSQL 12+ for production use
 
@@ -162,7 +162,7 @@ pin-to-ui/
 │   │   ├── controller/       # REST controllers
 │   │   ├── service/          # Business logic
 │   │   ├── repository/       # Data access
-│   │   ├── model/            # JPA entities
+│   │   ├── entity/            # JPA entities
 │   │   ├── dto/              # Data transfer objects
 │   │   ├── config/           # Configuration classes
 │   │   └── exception/        # Exception handlers
