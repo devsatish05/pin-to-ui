@@ -1,6 +1,6 @@
 # UI Comment System
 
-A full-stack application for adding comments and feedback annotations directly on web pages. Built with TypeScript/Vite frontend and Node.js/Express backend.
+A full-stack application for adding comments and feedback annotations directly on web pages. Built with TypeScript/Vite frontend and Spring Boot/Java backend.
 
 ## 🚀 Features
 
@@ -8,22 +8,24 @@ A full-stack application for adding comments and feedback annotations directly o
 - **Rich Metadata**: Categorize comments by type (Bug, Feature, Improvement, Question)
 - **Priority Levels**: Set priority from Low to Critical
 - **Status Tracking**: Track comment lifecycle (Open, In Progress, Resolved, Closed)
+- **Update & Delete**: Modify or remove comments with modal interface
 - **Standalone Library**: Can be integrated into any web application
 - **Independent Frontend**: Works without backend using localStorage
 - **RESTful API**: Complete backend API for comment management
-- **PostgreSQL Database**: Production-ready database with Prisma ORM
+- **H2 Database**: In-memory database for development (PostgreSQL ready for production)
 - **CORS Support**: Configured for cross-origin requests
 - **TypeScript**: Full type safety across frontend and backend
+- **Comprehensive Testing**: Unit and integration tests for both frontend and backend
 
 ## 📋 Prerequisites
 
 ### Backend
-- Java 8 or higher
+- Java 17 or higher (tested with Java 17 and Java 25)
 - Maven 3.6+
 - (Optional) PostgreSQL 12+ for production use
 
 ### Frontend
-- Node.js 20+ and npm
+- Node.js 16+ and npm
 - Modern web browser
 
 ## 🛠️ Installation & Setup
@@ -38,27 +40,23 @@ cd pin-to-ui
 ### 2. Backend Setup
 
 ```bash
-# Create PostgreSQL database
-createdb uicomment
-
 cd backend
 
-# Install dependencies
-npm install
-
-# Setup environment variables
-cp .env.example .env
-
-# Run database migrations
-npm run prisma:migrate
+# Build and run tests
+mvn clean install
 
 # Start development server
-npm run dev
+mvn spring-boot:run
 ```
 
 The backend will start on `http://localhost:8080`
 
-**🎉 Prisma Studio Available:** Open visual database editor with `npm run prisma:studio`
+**🎉 H2 Console Available:** Access the in-memory database console at `http://localhost:8080/h2-console`
+- JDBC URL: `jdbc:h2:mem:ui_comment_db`
+- Username: `sa`
+- Password: (leave empty)
+
+For detailed backend setup and configuration, see [backend/README.md](./backend/README.md)
 
 ### 3. Frontend Setup
 
@@ -70,11 +68,16 @@ npm install
 
 # Start development server
 npm run dev
+
+# Run tests
+npm test
 ```
 
 The frontend will start on `http://localhost:5173`
 
-**🎉 Frontend works independently!** Comments are saved to localStorage if backend is not running. See [STANDALONE.md](./STANDALONE.md) for details.
+**🎉 Frontend works independently!** Comments are saved to localStorage if backend is not running.
+
+For detailed frontend setup, testing, and integration guide, see [frontend/README.md](./frontend/README.md)
 
 ## 📖 Usage
 
@@ -160,53 +163,72 @@ curl -X POST http://localhost:8080/api/comments \
 
 ```
 pin-to-ui/
-├── backend/
-│   ├── src/main/java/com/example/uicomment/
-│   │   ├── controller/       # REST controllers
-│   │   ├── service/          # Business logic
-│   │   ├── repository/       # Data access
-│   │   ├── entity/            # JPA entities
-│   │   ├── dto/              # Data transfer objects
-│   │   ├── config/           # Configuration classes
-│   │   └── exception/        # Exception handlers
-│   └── pom.xml
+├── backend/                                    # Spring Boot Backend
+│   ├── src/
+│   │   ├── main/java/com/example/uicomment/
+│   │   │   ├── controller/                    # REST controllers
+│   │   │   ├── service/                       # Business logic
+│   │   │   ├── repository/                    # JPA repositories
+│   │   │   ├── model/                         # JPA entities
+│   │   │   └── config/                        # Configuration (CORS, etc.)
+│   │   └── test/java/                         # Unit & integration tests
+│   ├── pom.xml
+│   └── README.md                              # Backend documentation
 │
-├── frontend/
-│   ├── ui/                   # Main UI components
-│   ├── overlay/              # Overlay implementation
-│   ├── components/           # Reusable components
-│   ├── shared/               # Shared types and utilities
+├── frontend/                                   # Vite + TypeScript Frontend
+│   ├── ui/                                    # Main UI entry point
+│   ├── overlay/                               # Comment overlay implementation
+│   ├── components/                            # Reusable components
+│   ├── shared/                                # Types, API client, utilities
+│   ├── __tests__/                             # Jest unit tests
+│   ├── __mocks__/                             # Test mocks
+│   ├── test/specs/                            # WDIO E2E tests
 │   ├── package.json
+│   ├── jest.config.js
+│   ├── wdio.conf.ts
 │   ├── vite.config.ts
-│   └── tsconfig.json
+│   ├── tsconfig.json
+│   └── README.md                              # Frontend documentation
 │
-└── README.md
+├── TESTING.md                                  # Comprehensive testing guide
+└── README.md                                   # This file
 ```
 
 ## 🧪 Testing
 
-### Backend Tests
+### Backend Tests (Java/Spring Boot)
 
 ```bash
 cd backend
 mvn test
 ```
 
-### Frontend Linting
+**Test Coverage:**
+- ✅ 21 tests passing
+- Service layer tests (10 tests)
+- Controller integration tests (10 tests)
+- Application context test (1 test)
+
+### Frontend Tests (Jest + TypeScript)
 
 ```bash
 cd frontend
-npm run lint
-npm run format
+npm test
 ```
 
-## 🐳 Docker Deployment
+**Test Coverage:**
+- ✅ 12 tests passing
+- API client tests (7 tests)
+- Type validation tests (5 tests)
+- WDIO E2E tests configured
 
-See `INSTRUCTIONS.md` for Docker deployment instructions.
+### Comprehensive Testing Guide
+
+For detailed testing documentation, troubleshooting, and best practices, see [TESTING.md](./TESTING.md)
 
 ## 🔧 Configuration
 
-### Database Configuration
+### Backend Configuration
 
 **Default (H2 - No setup needed):**
 ```properties
@@ -218,29 +240,43 @@ spring.h2.console.enabled=true
 
 **Production (PostgreSQL):**
 
-Create `backend/src/main/resources/application-prod.properties` (already included):
+Edit `backend/src/main/resources/application.properties`:
 ```properties
 # PostgreSQL Database
 spring.datasource.url=jdbc:postgresql://localhost:5432/ui_comment_db
 spring.datasource.username=postgres
-spring.datasource.password=password
+spring.datasource.password=your_password
+spring.jpa.hibernate.ddl-auto=update
 ```
 
-Run with production profile:
-```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=prod
-# or
-java -jar target/ui-comment-backend-1.0.0.jar --spring.profiles.active=prod
+**CORS Configuration:**
+
+The backend is configured to accept requests from any origin by default. To restrict:
+
+Edit `backend/src/main/java/com/example/uicomment/config/WebConfig.java`:
+```java
+registry.addMapping("/**")
+    .allowedOriginPatterns("http://localhost:5173") // Specific origin
+    .allowedMethods("GET", "POST", "PUT", "DELETE")
+    .allowCredentials(true);
 ```
 
 ### Frontend Configuration
 
-Edit `frontend/.env`:
+The frontend is configured to connect to `http://localhost:8080` by default.
 
+To change the API URL, edit `frontend/ui/main.ts`:
+```typescript
+const overlay = new UICommentOverlay({
+  apiBaseUrl: 'http://your-api-url:port',
+  enableDebug: true,
+  position: 'bottom-right'
+});
 ```
-VITE_API_BASE_URL=http://localhost:8080/api
-VITE_ENABLE_DEBUG=true
-```
+
+For detailed configuration options, see package-specific README files:
+- [Backend Configuration](./backend/README.md)
+- [Frontend Configuration](./frontend/README.md)
 
 ## 📝 License
 

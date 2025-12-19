@@ -1,5 +1,5 @@
 import './overlay.scss';
-import { Comment, CommentPin, OverlayConfig, Position } from '../shared/types';
+import { Comment, CommentPin, OverlayConfig, Position, CommentStatus, CommentPriority } from '../shared/types';
 import ApiClient from '../shared/api-client';
 
 export class UICommentOverlay {
@@ -440,8 +440,8 @@ export class UICommentOverlay {
     const prioritySelect = document.getElementById('update-priority') as HTMLSelectElement;
 
     const updates = {
-      status: statusSelect?.value,
-      priority: prioritySelect?.value,
+      status: statusSelect?.value as CommentStatus,
+      priority: prioritySelect?.value as CommentPriority,
     };
 
     try {
@@ -461,7 +461,7 @@ export class UICommentOverlay {
       this.closeModal();
       
       // Update pin appearance if status is RESOLVED or CLOSED
-      if (updates.status === 'RESOLVED' || updates.status === 'CLOSED') {
+      if (updates.status === CommentStatus.RESOLVED || updates.status === CommentStatus.CLOSED) {
         this.updatePinAppearance(pin);
       }
       
