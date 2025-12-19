@@ -1,4 +1,4 @@
-@import '../shared/variables.scss';
+@use '../shared/variables' as *;
 
 * {
   box-sizing: border-box;
@@ -11,52 +11,59 @@ body {
     'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #9de8f4;
 }
 
-#app {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-align: center;
-  padding: $spacing-lg;
+.demo-container {
+  padding: $spacing-xl;
+  max-width: 1200px;
+  margin: 0 auto;
 
-  .demo-container {
-    max-width: 600px;
+  h1 {
+    color: $text-primary;
+    margin-bottom: $spacing-lg;
+  }
 
-    h1 {
-      font-size: 48px;
-      margin-bottom: $spacing-md;
+  .demo-section {
+    background: $bg-light;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    padding: $spacing-lg;
+    margin-bottom: $spacing-lg;
+
+    h2 {
+      color: $primary-color;
+      margin-top: 0;
     }
 
     p {
-      font-size: $font-size-lg;
-      margin-bottom: $spacing-xl;
-      opacity: 0.9;
+      color: $text-secondary;
+      line-height: 1.6;
     }
+  }
 
-    .instructions {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
+  .demo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: $spacing-md;
+    margin-top: $spacing-lg;
+
+    .demo-card {
+      background: white;
+      border: 1px solid $border-color;
       border-radius: $border-radius;
-      padding: $spacing-lg;
-      text-align: left;
+      padding: $spacing-md;
+      box-shadow: $shadow-sm;
+      transition: all $transition-normal;
 
-      h2 {
-        font-size: $font-size-xl;
-        margin-bottom: $spacing-md;
+      &:hover {
+        box-shadow: $shadow-md;
+        transform: translateY(-2px);
       }
 
-      ol {
-        padding-left: $spacing-lg;
-
-        li {
-          margin-bottom: $spacing-sm;
-          font-size: $font-size-base;
-        }
+      h3 {
+        color: $text-primary;
+        margin-top: 0;
       }
     }
   }
