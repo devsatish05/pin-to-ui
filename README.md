@@ -18,8 +18,9 @@ A full-stack application for adding comments and feedback annotations directly o
 ## 📋 Prerequisites
 
 ### Backend
-- Node.js 20+
-- PostgreSQL 15+
+- Java 8 or higher
+- Maven 3.6+
+- (Optional) PostgreSQL 12+ for production use
 
 ### Frontend
 - Node.js 20+ and npm
@@ -164,7 +165,7 @@ pin-to-ui/
 │   │   ├── controller/       # REST controllers
 │   │   ├── service/          # Business logic
 │   │   ├── repository/       # Data access
-│   │   ├── model/            # JPA entities
+│   │   ├── entity/            # JPA entities
 │   │   ├── dto/              # Data transfer objects
 │   │   ├── config/           # Configuration classes
 │   │   └── exception/        # Exception handlers

@@ -1,74 +1,56 @@
 package com.example.uicomment.controller;
 
-import com.example.uicomment.dto.CommentResponse;
-import com.example.uicomment.dto.CreateCommentRequest;
-import com.example.uicomment.dto.UpdateCommentRequest;
+import com.example.uicomment.model.Comment;
 import com.example.uicomment.service.CommentService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/comments")
-@RequiredArgsConstructor
-@Slf4j
-@CrossOrigin(origins = "${cors.allowed.origins}")
+@RequestMapping("/comments")
+@CrossOrigin
 public class CommentController {
-
-    private final CommentService commentService;
+    @Autowired
+    private CommentService commentService;
 
     @PostMapping
-    public ResponseEntity<CommentResponse> createComment(@Valid @RequestBody CreateCommentRequest request) {
-        log.info("Received request to create comment");
-        CommentResponse response = commentService.createComment(request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    public ResponseEntity<Comment> createComment(@RequestBody Comment comment) {
+        return ResponseEntity.ok(commentService.createComment(comment));
     }
 
     @GetMapping
-    public ResponseEntity<List<CommentResponse>> getAllComments() {
-        log.info("Received request to get all comments");
-        List<CommentResponse> comments = commentService.getAllComments();
-        return ResponseEntity.ok(comments);
+    public ResponseEntity<List<Comment>> getAllComments() {
+        return ResponseEntity.ok(commentService.getAllComments());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CommentResponse> getCommentById(@PathVariable Long id) {
-        log.info("Received request to get comment with ID: {}", id);
-        CommentResponse comment = commentService.getCommentById(id);
-        return ResponseEntity.ok(comment);
+    public ResponseEntity<Comment> getCommentById(@PathVariable Long id) {
+        Optional<Comment> comment = commentService.getCommentById(id);
+        return comment.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/page")
-    public ResponseEntity<List<CommentResponse>> getCommentsByPageUrl(@RequestParam String url) {
-        log.info("Received request to get comments for page: {}", url);
-        List<CommentResponse> comments = commentService.getCommentsByPageUrl(url);
-        return ResponseEntity.ok(comments);
+    public ResponseEntity<List<Comment>> getCommentsByPageUrl(@RequestParam String url) {
+        return ResponseEntity.ok(commentService.getCommentsByPageUrl(url));
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<CommentResponse>> getCommentsByStatus(@PathVariable String status) {
-        log.info("Received request to get comments with status: {}", status);
-        List<CommentResponse> comments = commentService.getCommentsByStatus(status);
-        return ResponseEntity.ok(comments);
+    public ResponseEntity<List<Comment>> getCommentsByStatus(@PathVariable String status) {
+        return ResponseEntity.ok(commentService.getCommentsByStatus(status));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<CommentResponse> updateComment(
-            @PathVariable Long id,
-            @Valid @RequestBody UpdateCommentRequest request) {
-        log.info("Received request to update comment with ID: {}", id);
-        CommentResponse response = commentService.updateComment(id, request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<Comment> updateComment(@PathVariable Long id, @RequestBody Comment updates) {
+        Comment updated = commentService.updateComment(id, updates);
+        if (updated == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteComment(@PathVariable Long id) {
-        log.info("Received request to delete comment with ID: {}", id);
         commentService.deleteComment(id);
         return ResponseEntity.noContent().build();
     }
